@@ -1,0 +1,132 @@
+enum TransactionType {
+  INCOME
+  EXPENSE
+  TRANSFER
+}
+
+enum Recurrence {
+  ONCE
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+  YEARLY
+}
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String       @id @default(uuid())
+  email          String       @unique
+  firstName      String?
+  lastName       String?
+  budgets        Budget[]
+  sinkingFunds   SinkingFund[]
+  transactions   Transaction[]
+  bills          Bill[]
+  categories     Category[]
+  reminders      Reminder[]
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt @default(now())
+}
+
+model Budget {
+  id          String      @id @default(uuid())
+  userId      String
+  name        String
+  amount      Decimal     @db.Decimal(10, 2)
+  startDate   DateTime
+  endDate     DateTime?   
+  recurrence  Recurrence
+  categoryIcon String?
+  notes       String?
+  user        User        @relation(fields: [userId], references: [id])
+  transactions Transaction[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model SinkingFund {
+  id                  String      @id @default(uuid())
+  userId              String
+  name                String
+  targetAmount        Decimal     @db.Decimal(10, 2)
+  currentAmount       Decimal     @default(0) @db.Decimal(10, 2)
+  monthlyContribution Decimal?    @db.Decimal(10, 2)
+  targetDate          DateTime?
+  categoryIcon        String?
+  isArchived          Boolean     @default(false)
+  user                User        @relation(fields: [userId], references: [id])
+  transactions        Transaction[]
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+}
+
+model Transaction {
+  id             Int @id @default(autoincrement())
+  userId         String
+  amount         Decimal     @db.Decimal(10, 2)
+  type           TransactionType
+  description    String
+  date           DateTime
+  budgetId       String?
+  sinkingFundId  String?
+  categoryId     String?     
+  isRecurring    Boolean     @default(false)
+  notes          String?
+  user           User        @relation(fields: [userId], references: [id])
+  budget         Budget?     @relation(fields: [budgetId], references: [id])
+  sinkingFund    SinkingFund? @relation(fields: [sinkingFundId], references: [id])
+  category       Category?   @relation(fields: [categoryId], references: [id])
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+}
+
+model Bill {
+  id          String      @id @default(uuid())
+  userId      String
+  name        String
+  amount      Decimal     @db.Decimal(10, 2)
+  dueDate     DateTime
+  frequency   Recurrence
+  nextDueDate DateTime?
+  isPaid      Boolean     @default(false)
+  autoPay     Boolean     @default(false)
+  notes       String?
+  user        User        @relation(fields: [userId], references: [id])
+  reminders   Reminder[]  
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model Category {
+  id          String        @id @default(uuid())
+  userId      String
+  name        String
+  icon        String?
+  color       String?
+  user        User          @relation(fields: [userId], references: [id])
+  transactions Transaction[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model Reminder {
+  id         String    @id @default(uuid())
+  userId     String
+  message    String
+  dueDate    DateTime
+  billId     String?
+  isSent     Boolean   @default(false)
+  user       User      @relation(fields: [userId], references: [id])
+  bill       Bill?     @relation(fields: [billId], references: [id])
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}
