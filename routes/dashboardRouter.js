@@ -111,7 +111,17 @@ dashboardSinkingFundsRouter.post('/sinking-funds', async (req, res) => {
 dashboardSinkingFundsRouter.put('/sinking-funds', async (req, res) => {});
 
 // Delete Fund
-dashboardSinkingFundsRouter.delete('/sinking-funds', async (req, res) => {});
+dashboardSinkingFundsRouter.delete('/sinking-funds', async (req, res) => {
+  const id = req.body.id;
+
+  const deletedFund = await pool.query(
+    'DELETE FROM "SinkingFund" WHERE id = $1',
+    [id]
+  );
+  console.log(deletedFund);
+
+  res.status(200).json({ message: 'Fund Deleted', id });
+});
 
 module.exports = { dashboardSinkingFundsRouter };
 
