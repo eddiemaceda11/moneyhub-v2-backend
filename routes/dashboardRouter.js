@@ -49,7 +49,62 @@ dashboardSinkingFundsRouter.get('/sinking-funds/:id', async (req, res) => {
 
 // Create new fund
 dashboardSinkingFundsRouter.post('/sinking-funds', async (req, res) => {
-  // Values needed -
+  const {
+    id,
+    userId,
+    name,
+    targetAmount,
+    currentAmount,
+    monthlyContribution,
+    //targetDate,
+    categoryIcon,
+    isArchived,
+    //createdAt,
+    //updatedAt,
+  } = req.body;
+
+  if (!id) {
+    res.status(400).json({ message: 'An id is required' });
+  }
+
+  if (!userId) {
+    res.status(400).json({ message: 'A user id is required' });
+  }
+
+  if (!name) {
+    res.status(400).json({ message: 'A name for the fund is required' });
+  }
+
+  if (!targetAmount) {
+    res
+      .status(400)
+      .json({ message: 'A target amount for the fund is required' });
+  }
+
+  try {
+    const fundCreated = await pool.query(
+      'INSERT INTO "SinkingFund" Values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)',
+      [
+        id,
+        userId,
+        name,
+        targetAmount,
+        currentAmount,
+        monthlyContribution,
+        new Date(),
+        categoryIcon,
+        isArchived,
+        new Date(),
+        new Date(),
+      ]
+    );
+
+    console.log(fundCreated);
+    res.status(200).json({ message: 'Fund created', id });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message || err });
+  }
 });
 
 // Edit fund
